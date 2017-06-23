@@ -1,11 +1,11 @@
 # actualiza-Ley
 
-function actualiza-Ley {
+function Get-LeyBOE {
 
 
 <#
 .SYNOPSIS
-Actualiza rdf de leyes desde el BOE
+Obtiene xml de leyes desde el BOE
 .DESCRIPTION
 para cada ley construyes url xml del boe, obtiene los metadatos y el analisis y actualiza la base de datos rdf
 #>
@@ -16,13 +16,20 @@ param (
             ValueFromPipeline=$True,
             HelpMessage="Código BOE de la ley a actualizar")]
     [string]$LeyBOE,
-    [string]$EndPoint   
+
+    [string]$EndPoint = 
     
 )
-$objLey = {}
-$boe = "https://www.boe.es/diario_boe/xml.php?id=BOE-A-1988-17787"
 
-$xmlLey = [XML] (Invoke-WebRequest $boe)
+BEGIN {
+   
+  
+}
+
+PROCESS {
+
+    foreach (LeyBOE in Leyes)
+    $xmlLey = [XML] (Invoke-WebRequest $LeyBOE)
 
 
 
@@ -40,15 +47,23 @@ $xmlLey = [XML] (Invoke-WebRequest $boe)
     $objLey.estatusDerogacion = $xmlLey.documento.metadatos.estatus_derogacion
     $objLey.materias =  $xmlLey.documento.analisis.materias.materia.innertext
 
-return $objLey
+
+    $objLey = PsObject -...
+
+END {}
     
 }
 
 
 
+
+
+
+function Set-LeyRDF {
+
 <#
 .SYNOPSIS
-escribe propiedades leyes 
+escribe propiedades leyes en el RDF endpoint
 .DESCRIPTION
 #>
 
@@ -57,30 +72,49 @@ escribe propiedades leyes
 
 param (
     [Parameter(Mandatory=$True,
-            ValueFromPipeline=$False,
-            HelpMessage="Nombre del fichero exportado de calibre")]
+            ValueFromPipeline=$True)]
     [string]$xmlCalibre,
+
     [string]$ErrorLog = 'c:\noconvertidos.txt',
     [switch]$LogErrors
     
 )
 
-Add-Type -Assembly System.Web    
-
+BEGIN {
 $GrafoTTL = @"
-function set-Ley(Ley)
-    $Ley deOI:departamento $xmlLey.documento.metadatos.rango
-    deOI:rangoCodigo "Real Decreto" ;
+Update {
+    $LeyBoe 
+        deOI:departamento $objLey.Departamento ;
+        deOI:rangoCodigo $objLey.rango ;
+        deOI:fechaDisposicion $objLey.fechadisposicion ;
+        deOI:FechaPublicacion $objley.fechaPublicacion ;
+        deOI:fechaVigencia $objley.fechaVigencia ;
+        deOI:fechaDerogacion $objley.fechaderogacion ;
+        deOI:estatusLegislativo $objley.estatuslegislativo ;
+        deOI:origenLegislativo $objley.origenLegislativo ;
+        deOI:estadoConsolidacion $objley.estadoConsolidacion ;
+        deOI:judicialmenteAnulada $objley.judicialmenteAnulada ;
+        deOI:vigenciaAgotada $objley.vigenciaAgotada ;
+        deOI:estatusDerogacion $objley.estatusDerogacion ;
+        deOI:Materias = $objley.Materias .
+    }
+    WHERE {} 
+}
+"@
 
-    deOI:fechaDisposicion "19850924" ;
-    deOI:FechaPublicacion "19851028" ;
-    deOI:fechaVigencia "19851117" ;
-    deOI:fechaDerogacion "20080321" ;
-    deOI:estatusLegislativo "L" ;
-    deOI:origenLegislativo "Estatal" ;
-    deOI:estadoConsolidacion 0 ;
-    deOI:judicialmenteAnulada "N" ;
-    deOI:vigenciaAgotada "S" ;
-    deOI:estatusDerogacion "S" ;
-    deOI:Materias = [string] ($xmlley.documento.analisis.materias.materia.innertext)
+
+PROCESS {
+    foreach (Ley in Leyes) {
+        query = $GrafoTTL($LeyBOE)
+        Invoke-WebRequest(update RDF4J)
+
     
+}
+
+
+
+}
+
+# EJECUTA
+# PIPELINE
+"https://www.boe.es/diario_boe/xml.php?id=BOE-A-1988-17787" | get-LeyBoe | set-LeyRDF
