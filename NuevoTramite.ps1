@@ -17,6 +17,9 @@ $nuevoTramite.Height = 444
 
 # CARGAR COMBOS Y LISTOBOX
 
+
+ 
+    
 $nuevoTramite.Add_Load({
 $query = @"
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -42,66 +45,23 @@ SELECT ?Solicitud WHERE ?Solicitud rdf:type deOI:Solicitud
     } 
 
 })
-$groupBox = New-Object System.Windows.Forms.GroupBox 
-$groupBox.Location = New-Object System.Drawing.Size(20,20) 
-$groupBox.size = New-Object System.Drawing.Size(200,50) 
-$groupBox.text = "Clase"
-$NuevoTramite.Controls.Add($groupBox) 
 
-$rbConductores = New-Object system.windows.Forms.RadioButton
-$rbConductores.Text = "Conductores"
-$rbConductores.AutoSize = $true
-$rbConductores.Width = 104
-$rbConductores.Height = 20
-$rbConductores.location = new-object system.drawing.point(36,28)
-$rbConductores.Font = "Microsoft Sans Serif,10"
-$groupBox.controls.Add($rbConductores)
+$cbClase = New-Object system.windows.Forms.ComboBox
+$cbClase.Text = "Solicitud"
+$cbClase.Width = 20
+$cbClase.Height = 20
+$cbClase.location = new-object system.drawing.point(35,267)
+$cbClase.Font = "Microsoft Sans Serif,10"
+$cbClase.items.Add("deOI:ObtencionPConduccion")
+$cbClase.items.Add("deOI:RenovacionPConduccion")
+$cbClase.items.Add("deOI:BajaPConduccion")
+$cbClase.items.Add("deOI:CertificacionesConductores")
+$cbClase.items.Add("deOI:ObtencionPCirculacion")
+$cbClase.items.Add("deOI:RenovacionPCirculacion")
+$cbClase.items.Add("deOI:BajaPCirculacion")
+$cbClase.items.Add("deOI:CertificacionesVehiculos")
+$nuevoTramite.controls.Add($cbClase)
 
-$rbCertificados = New-Object system.windows.Forms.RadioButton
-$rbCertificados.Text = "Certificacion"
-$rbCertificados.AutoSize = $true
-$rbCertificados.Width = 104
-$rbCertificados.Height = 20
-$rbCertificados.location = new-object system.drawing.point(242,28)
-$rbCertificados.Font = "Microsoft Sans Serif,10"
-$groupBox.controls.Add($rbCertificados)
-
-
-$rbVehiculos = New-Object system.windows.Forms.RadioButton
-$rbVehiculos.Text = "Vehículos"
-$rbVehiculos.AutoSize = $true
-$rbVehiculos.Width = 104
-$rbVehiculos.Height = 20
-$rbVehiculos.location = new-object system.drawing.point(142,28)
-$rbVehiculos.Font = "Microsoft Sans Serif,10"
-$groupBox.controls.Add($rbVehiculos)
-
-$rbObtencion = New-Object system.windows.Forms.RadioButton
-$rbObtencion.Text = "Obtención"
-$rbObtencion.AutoSize = $true
-$rbObtencion.Width = 104
-$rbObtencion.Height = 20
-$rbObtencion.location = new-object system.drawing.point(37,58)
-$rbObtencion.Font = "Microsoft Sans Serif,10"
-$nuevoTramite.controls.Add($rbObtencion)
-
-$rbRenovacion = New-Object system.windows.Forms.RadioButton
-$rbRenovacion.Text = "Renovación"
-$rbRenovacion.AutoSize = $true
-$rbRenovacion.Width = 104
-$rbRenovacion.Height = 20
-$rbRenovacion.location = new-object system.drawing.point(143,58)
-$rbRenovacion.Font = "Microsoft Sans Serif,10"
-$nuevoTramite.controls.Add($rbRenovacion)
-
-$rbBaja = New-Object system.windows.Forms.RadioButton
-$rbBaja.Text = "Baja"
-$rbBaja.AutoSize = $true
-$rbBaja.Width = 104
-$rbBaja.Height = 20
-$rbBaja.location = new-object system.drawing.point(242,59)
-$rbBaja.Font = "Microsoft Sans Serif,10"
-$nuevoTramite.controls.Add($rbBaja)
 
 $tbEtiqueta = New-Object system.windows.Forms.TextBox
 $tbEtiqueta.Width = 315
@@ -169,7 +129,7 @@ $label15.location = new-object system.drawing.point(37,306)
 $label15.Font = "Microsoft Sans Serif,10"
 $nuevoTramite.controls.Add($label15)
 
-$tbHInformativa = New-Object system.windows.Forms.texbox
+$tbHInformativa = New-Object system.windows.Forms.textbox
 $tbHInformativa.Text = "Hoja Informativa"
 $tbHInformativa.Width = 322
 $tbHInformativa.Height = 20
@@ -194,7 +154,7 @@ $bAceptar.Text = "Aceptar"
 $bAceptar.Width = 60
 $bAceptar.Height = 30
 $bAceptar.Add_Click({
-    get-formTramite | set-Triples
+    get-formTramite | update-Triples})
 
 $bAceptar.location = new-object system.drawing.point(540,364)
 $bAceptar.Font = "Microsoft Sans Serif,10"
@@ -211,23 +171,12 @@ $nuevoTramite.Dispose()
 
 
 function get-formTramite {
+    $Triples.clear()
     $Triple.sujeto = $Tramite
 
     # clase Tramite
     $Triple.predicado = 'rdf:type'
-    if ($rbConductores.checked)
-        if ($rbObtencion.checked) {$Triple.objeto = deOI:ObtencionPConduccion}
-        if ($rbRenovacion.checked) {$Triple.objeto = deOI:RenovacionPConduccion}
-        if ($rbBaja.checked) {$Triple.objeto = deOI:BajaPConduccion}
-        if ($rbCertificaciones) {$Triple.objeto = deOI:CertificacionesConductores}
-
-    if ($rbVehiculos.checked) {
-        if ($rbObtencion.checked) {$Triple.objeto = deOI:ObtencionPCirculacion}
-        if ($rbRenovacion.checked) {$Triple.objeto = deOI:RenovacionPCirculacion}
-        if ($rbBaja.checked) {$Triple.objeto = deOI:BajaPCirculacion}
-        if ($rbCertificaciones) {$Triple.objeto = deOI:CertificacionesVehiculos}
-
-  
+    $Triple.objeto = $cbClase.SelectedItems.ToString()
     $triples.add($triple)   
 
     # Etiqueta y Comentario
@@ -239,25 +188,25 @@ function get-formTramite {
     $triples.add()
 
     # Tasas
-    $Tasas = $lbTasas.SelectedItem.ToString() 
-    $foreach $Tasa in $Tasas {
+    $Tasas = $lbTasas.SelectedItems.ToString()  
+    foreach($Tasa in $Tasas) {
          $Triple.sujeto = $Tramite
          $Triple.predicado = 'deOI:hasTasa'
          $Triple.objeto = $Tasa
-         $triples.add(Triple)
+         $triples.add($Triple)
     }
 
     # Solicitud
     $Triple.sujeto = $Tramite
     $Triple.predicado = 'deOI:hasSolicitud'
     $Triple.objeto = $tbSolicitud.Text
-    $triples.add(Triple)
+    $triples.add($Triple)
 
     # Hoja requisitos
     $Triple.sujeto = $Tramite
     $Triple.predicado = 'deOI:hasHojaInformativa'
     $Triple.objeto = $tbHInformativa.Text
-    $triples.add(Triple)
+    $triples.add($Triple)
 
 
 }
@@ -291,7 +240,7 @@ param (
     write-out  $a.results.bindings.url.value
 }
 
-}
+
 
 
 
@@ -326,7 +275,7 @@ PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
 "@      
    $update = $prefijos
    $update += 'UPDATE {'
-   foreach $triple in $triples {
+   foreach ($triple in $triples) {
         $update += $triple.sujeto + $triple.predicado + $triple.objeto
    }
    $update += '} GRAPH' + $Grafo
