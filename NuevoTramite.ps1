@@ -1,19 +1,12 @@
 Add-Type -AssemblyName System.Windows.Forms
 
-
-
+$urldeOI = "http://10.50.208.48:8080/rdf4j-server/repositories/deOI"
+$urlRepos = "http://10.50.208.48:8080/rdf4j-server/repositories"
 
 $myHash = @{sujeto="";propiedad="";objeto=""} 
 $triple = new-object psObject -property $myhash
 $triples = @($triple)
 
-
-<#
-$triple.sujeto = read-host -prompt "Sujeto"
-$triple.propiedad = "dgt:etiqueta"
-$triple.objeto = read-host -prompt "etiqueta"
-$triples.add($triple)
-#>
 
 
 $nuevoTramite = New-Object system.Windows.Forms.Form
@@ -21,22 +14,39 @@ $nuevoTramite.Text = "Nuevo Tramite"
 $nuevoTramite.TopMost = $true
 $nuevoTramite.Width = 652
 $nuevoTramite.Height = 444
+
+# CARGAR COMBOS Y LISTOBOX
+
 $nuevoTramite.Add_Load({
-    $Tasas = get-triples('SELECT ?Tasa WHERE ?Tasa rdf:type deOI:Tasa')
+$query = @"
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
+SELECT ?Tasa WHERE ?Tasa rdf:type deOI:Tasa
+"@
+    $data = query-rdfData($query)
+    $Tasas = $data.results.bindings.Tasa.value
     foreach ($Tasa in $Tasas) {
         $lbtasas.Items.Add($Tasa)
     } 
-    $Solicitudes = getTriples('SELECT ?Solicitud WHERE ?Solicitud rdf:type deOI:Solicitud')
+$query = @"
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
+SELECT ?Solicitud WHERE ?Solicitud rdf:type deOI:Solicitud
+"@
+
+
+    $data = query-rdfData($query)
+    $Solicitudes = $data.results.bindings.Solicitud.value
     foreach ($Solicitud in $Solicitudes) {
         $lbSolicitud.Items.Add($Solicitud)
     } 
 
 })
-$groupBox = New-Object System.Windows.Forms.GroupBox #create the group box
-$groupBox.Location = New-Object System.Drawing.Size(20,20) #location of the group box (px) in relation to the primary window's edges (length, height)
-$groupBox.size = New-Object System.Drawing.Size(200,50) #the size in px of the group box (length, height)
-$groupBox.text = "Nr of pings:" #labeling the box
-$NuevoTramite.Controls.Add($groupBox) #activate the group box
+$groupBox = New-Object System.Windows.Forms.GroupBox 
+$groupBox.Location = New-Object System.Drawing.Size(20,20) 
+$groupBox.size = New-Object System.Drawing.Size(200,50) 
+$groupBox.text = "Clase"
+$NuevoTramite.Controls.Add($groupBox) 
 
 $rbConductores = New-Object system.windows.Forms.RadioButton
 $rbConductores.Text = "Conductores"
@@ -167,6 +177,7 @@ $tbHInformativa.location = new-object system.drawing.point(36,326)
 $tbHInformativa.Font = "Microsoft Sans Serif,10"
 $nuevoTramite.controls.Add($tbHInformativa)
 
+
 $bCancelar = New-Object system.windows.Forms.Button
 $bCancelar.Text = "Cancelar"
 $bCancelar.Width = 60
@@ -200,74 +211,137 @@ $nuevoTramite.Dispose()
 
 
 function get-formTramite {
-    $s = $Tramite
+    $Triple.sujeto = $Tramite
 
     # clase Tramite
-    $p = rdf:type
+    $Triple.predicado = 'rdf:type'
     if ($rbConductores.checked)
-        if ($rbObtencion.checked) {$o = deOI:ObtencionPConduccion}
-        if ($rbRenovacion.checked) {$o = deOI:RenovacionPConduccion}
-        if ($rbBaja.checked) {$o = deOI:BajaPConduccion}
-        if ($rbCertificaciones) {$o = deOI:CertificacionesConductores}
+        if ($rbObtencion.checked) {$Triple.objeto = deOI:ObtencionPConduccion}
+        if ($rbRenovacion.checked) {$Triple.objeto = deOI:RenovacionPConduccion}
+        if ($rbBaja.checked) {$Triple.objeto = deOI:BajaPConduccion}
+        if ($rbCertificaciones) {$Triple.objeto = deOI:CertificacionesConductores}
 
     if ($rbVehiculos.checked) {
-        if ($rbObtencion.checked) {$o = deOI:ObtencionPCirculacion}
-        if ($rbRenovacion.checked) {$o = deOI:RenovacionPCirculacion}
-        if ($rbBaja.checked) {$o = deOI:BajaPCirculacion}
-        if ($rbCertificaciones) {$o = deOI:CertificacionesVehiculos}
+        if ($rbObtencion.checked) {$Triple.objeto = deOI:ObtencionPCirculacion}
+        if ($rbRenovacion.checked) {$Triple.objeto = deOI:RenovacionPCirculacion}
+        if ($rbBaja.checked) {$Triple.objeto = deOI:BajaPCirculacion}
+        if ($rbCertificaciones) {$Triple.objeto = deOI:CertificacionesVehiculos}
 
   
     $triples.add($triple)   
 
     # Etiqueta y Comentario
-    $p = 'rdfs:label'
-    $o = $tbEtiqueta.text
+    $Triple.predicado = 'rdfs:label'
+    $Triple.objeto = $tbEtiqueta.text
     $triples.add()
-    $p = 'rdfs:comment'
-    $o = $tbComentario.text
+    $Triple.predicado = 'rdfs:comment'
+    $Triple.objeto = $tbComentario.text
     $triples.add()
 
     # Tasas
     $Tasas = $lbTasas.SelectedItem.ToString() 
     $foreach $Tasa in $Tasas {
-         $Triple.s = $Tramite
-         $Triple.p = 'deOI:hasTasa'
-         $Triple.o = $Tasa
+         $Triple.sujeto = $Tramite
+         $Triple.predicado = 'deOI:hasTasa'
+         $Triple.objeto = $Tasa
          $triples.add(Triple)
     }
 
-
-
     # Solicitud
+    $Triple.sujeto = $Tramite
+    $Triple.predicado = 'deOI:hasSolicitud'
+    $Triple.objeto = $tbSolicitud.Text
+    $triples.add(Triple)
 
+    # Hoja requisitos
+    $Triple.sujeto = $Tramite
+    $Triple.predicado = 'deOI:hasHojaInformativa'
+    $Triple.objeto = $tbHInformativa.Text
+    $triples.add(Triple)
 
 
 }
 
-
-function get-Triples {
-    param(string $query)
-
-
-
-}
-
+function query-rdfdata {
+<#
+.SYNOPSIS
+    envia query al servidor
+.DESCRIPTION
+#>
 
 
+[CmdLetBinding()]
 
-function set-Triples
-    param([]$Triples
-           $Grafo)
 
-   $query = 'UPDATE {'
-   foreach $triple in $triples {
-        $query+= $triple.s + $triple.p + $triple.o
-   }
-   $query+= '} GRAPH' + $Grafo
-   GRAPH $Contexto
+param (
+    [Parameter(Mandatory=$True,
+            ValueFromPipeline=$True)]
+    [string]$query
+
+    )
    
-   #lanza query 
-   $url = "https://${servidor}:8080/openrdf-sesame/repositories/DGT/statements"
-   Invoke-RestMethod -Method Post -Uri $url -Credential $cred -Body $body 
+    $Equery = [System.Web.HttpUtility]::UrlEncode($query)
+    $body = "query=$Equery"
+    $header = @{Accept='SPARQL/JSON'}
+
+ 
+    $a = Invoke-RestMethod  $urldeOI -method post -body $body -Contenttype application/x-www-form-urlencoded -headers @{'Accept'='application/json'}
+
+
+    write-out  $a.results.bindings.url.value
+}
+
+}
+
+
+
+
+
+
+
+function update-Triples {
+    <#
+.SYNOPSIS
+    envia update al servidor
+.DESCRIPTION
+#>
+
+
+[CmdLetBinding()]
+
+
+param (
+    [Parameter(Mandatory=$True,
+            ValueFromPipeline=$True)]
+            $Triples
+
+    )
+   
+
+    
+     $prefijos = @"
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
+
+"@      
+   $update = $prefijos
+   $update += 'UPDATE {'
+   foreach $triple in $triples {
+        $update += $triple.sujeto + $triple.predicado + $triple.objeto
+   }
+   $update += '} GRAPH' + $Grafo
+
+    $Eupdate = [System.Web.HttpUtility]::UrlEncode($update)
+       
+    $Eupdate = [System.Web.HttpUtility]::UrlEncode($Update)
+        
+        
+        
+    $eUpdate="update=$eupdate"
+    $eupdate
+        
+    Invoke-RestMethod $uri -method post -body $EUpdate -Contenttype 'application/x-www-form-urlencoded' -headers @{'Accept'='application/json'}
+      
+
 
 }    
