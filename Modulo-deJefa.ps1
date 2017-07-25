@@ -1,14 +1,16 @@
-# actualiza-Ley
-
-
-
+# MODULO SERVIDOR deJEFA
+<#
+MÃ³dulo con las funciones para el servidor 
+#>
+$RdfdeOI = "http://10.50.208.48:8080/rdf4j-server/repositories/deOI"
+$RdfRepos = "http://10.50.208.48:8080/rdf4j-server/repositorios"
 function Actualiza-Leyes {
 <#
 .SYNOPSIS
 Actualiza propiedades de leyes obteniendolas del BOE
 #>
 
-Get-RDFLeyes | Get-xmlLeyBOE | set-RDFLey
+    Get-RDFLeyes | Get-xmlLeyBOE | set-RDFLey
 }
 
 
@@ -18,23 +20,40 @@ Get-RDFLeyes | Get-xmlLeyBOE | set-RDFLey
 function Get-RDFLeyes {
 <#
 .SYNOPSIS
-Obtiene los códigos BOE de la leyes a actualizar desde el endpoint
+Obtiene los cÃ³digos BOE de la leyes a actualizar desde el RdfServer
 #>
-query = 'SELECT ?Ley WHERE {?Ley rdf:type deOI:Ley. }'
+
+$query = "SELECT ?Ley WHERE {?Ley rdf:type deOI:Ley. }"
+$uri = $RdfServer + "/statements" + $query
+
     Try {
-            Invoke-WebRequest(update RDF4J)
+            $Leyes = Invoke-RestMethod -Method Post -Uri $uri -body $body
         }
     Catch {
             write-warning "error accediendo endpoint"
         }
-    }
+    write-out $Leyes
 }
 
 
 
+function Get-RdfRepositorios {
 
+<#
+.SYNOPSIS
+Obtiene los metadatos en xml de leyes desde el BOE y los pasa como objetos PW
+.DESCRIPTION
+para cada ley con id del boe construye la url xml , obtiene los metadatos y el analisis y actualiza la base de datos rdf
+.PARAMETRO $LeyBoe
+#>
 
-
+    $webClient = New-Object System.Net.WebClient
+    $webClient.Headers.add('accept','application/json')
+    $a = $webClient.DownloadString($RdfRepos)
+    $p = convertFrom-Json $a
+    $a
+    $p.results.bindings.title.Value
+}
 
 
 
@@ -64,7 +83,7 @@ para cada ley con id del boe construye la url xml , obtiene los metadatos y el a
 param (
     [Parameter(Mandatory=$True,
             ValueFromPipeline=$True,
-            HelpMessage="CÃ³digo BOE de la ley a actualizar")]
+            HelpMessage="CÃƒÂ³digo BOE de la ley a actualizar")]
     [string]$LeyBOE,
 
     [string]$EndPoint = "",
@@ -77,7 +96,7 @@ param (
 
 BEGIN {
   
-  Write-Verbose "Error log será "c:\PWLOGS\logsLEYbOE"
+  Write-Verbose "Error log serÃ¡ "c:\PWLOGS\logsLEYbOE"
   
 }
 
@@ -121,10 +140,10 @@ function Get-RDFCodigoLey {
 
 <#
 .SYNOPSIS
-obtiene lista de códigos del boe de las leyes introducidas en el endpoint RDF
+obtiene lista de cÃ³digos del boe de las leyes introducidas en el endpoint RDF
 .DESCRIPTION
-ñlkjñlkj
-.PARAMETER endPoint
+Ã±lkjÃ±lkj
+.PARAMETER RdfServer
 url servidor web y repositorio donde residen las leyes. Posee valor por defecto
 #>
 
@@ -132,7 +151,7 @@ url servidor web y repositorio donde residen las leyes. Posee valor por defecto
 param (
     [Parameter(Mandatory=$False,
             ValueFromPipeline=$True)]
-    string $endPoint = "DGT71543:8080/repositorie/deOI" 
+    string $RdfServer = httpDGT71543:8080/repositorie/deOI" 
 )
 
     BEGIN {
@@ -237,4 +256,6 @@ PROCESS {
 
 # EJECUTA
 # PIPELINE
-"https://www.boe.es/diario_boe/xml.php?id=BOE-A-1988-17787" | get-LeyBoe | set-LeyRDF
+#"https://www.boe.es/diario_boe/xml.php?id=BOE-A-1988-17787" | get-LeyBoe | set-LeyRDF
+
+Get-RdfRepositorios
