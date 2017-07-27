@@ -1,13 +1,15 @@
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -Assembly System.Web
 
 $urldeOI = "http://10.50.208.48:8080/rdf4j-server/repositories/deOI"
 $urlRepos = "http://10.50.208.48:8080/rdf4j-server/repositories"
 
-$myHash = @{sujeto="";propiedad="";objeto=""} 
+$myHash = @{sujeto="";predicado="";objeto=""} 
 $triple = new-object psObject -property $myhash
 $triples = @($triple)
 
 
+function Nuevo-Tramite {
 
 $nuevoTramite = New-Object system.Windows.Forms.Form
 $nuevoTramite.Text = "Nuevo Tramite"
@@ -16,17 +18,14 @@ $nuevoTramite.Width = 652
 $nuevoTramite.Height = 444
 
 # CARGAR COMBOS Y LISTOBOX
-
-
- 
     
 $nuevoTramite.Add_Load({
 $query = @"
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
-SELECT ?Tasa WHERE ?Tasa rdf:type deOI:Tasa
+SELECT ?Tasa WHERE {?Tasa rdf:type deOI:Tasa}
 "@
-    $data = query-rdfData($query)
+    $data = query-rdfdata($query)
     $Tasas = $data.results.bindings.Tasa.value
     foreach ($Tasa in $Tasas) {
         $lbtasas.Items.Add($Tasa)
@@ -34,7 +33,7 @@ SELECT ?Tasa WHERE ?Tasa rdf:type deOI:Tasa
 $query = @"
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
-SELECT ?Solicitud WHERE ?Solicitud rdf:type deOI:Solicitud
+SELECT ?Solicitud WHERE {?Solicitud rdf:type deOI:Solicitud}
 "@
 
 
@@ -47,10 +46,10 @@ SELECT ?Solicitud WHERE ?Solicitud rdf:type deOI:Solicitud
 })
 
 $cbClase = New-Object system.windows.Forms.ComboBox
-$cbClase.Text = "Solicitud"
-$cbClase.Width = 20
+$cbClase.Text = ""
+$cbClase.Width = 315
 $cbClase.Height = 20
-$cbClase.location = new-object system.drawing.point(35,267)
+$cbClase.location = new-object system.drawing.point(35,30)
 $cbClase.Font = "Microsoft Sans Serif,10"
 $cbClase.items.Add("deOI:ObtencionPConduccion")
 $cbClase.items.Add("deOI:RenovacionPConduccion")
@@ -82,7 +81,7 @@ $lbtasas = New-Object system.windows.Forms.ListBox
 $lbtasas.Text = "tasas"
 $lbtasas.Width = 318
 $lbtasas.Height = 26
-$lbtasas.location = new-object system.drawing.point(36,202)
+$lbtasas.location = new-object system.drawing.point(50,202)
 $nuevoTramite.controls.Add($lbtasas)
 
 $label11 = New-Object system.windows.Forms.Label
@@ -163,7 +162,7 @@ $nuevoTramite.controls.Add($bAceptar)
 [void]$nuevoTramite.ShowDialog()
 $nuevoTramite.Dispose()
 
-
+}
 
 
 
@@ -207,9 +206,10 @@ function get-formTramite {
     $Triple.predicado = 'deOI:hasHojaInformativa'
     $Triple.objeto = $tbHInformativa.Text
     $triples.add($Triple)
-
-
 }
+
+
+
 
 function query-rdfdata {
 <#
@@ -217,7 +217,6 @@ function query-rdfdata {
     envia query al servidor
 .DESCRIPTION
 #>
-
 
 [CmdLetBinding()]
 
@@ -235,9 +234,9 @@ param (
 
  
     $a = Invoke-RestMethod  $urldeOI -method post -body $body -Contenttype application/x-www-form-urlencoded -headers @{'Accept'='application/json'}
+    $a
 
-
-    write-out  $a.results.bindings.url.value
+    return $a.results.bindings.url.value
 }
 
 
@@ -249,7 +248,7 @@ param (
 
 
 function update-Triples {
-    <#
+<#
 .SYNOPSIS
     envia update al servidor
 .DESCRIPTION
@@ -262,7 +261,7 @@ function update-Triples {
 param (
     [Parameter(Mandatory=$True,
             ValueFromPipeline=$True)]
-            $Triples
+            [string]$Triples
 
     )
    
@@ -294,3 +293,6 @@ PREFIX deOI: <http://github.com/georgedelajungla/deOI/deOI#>
 
 
 }    
+
+
+Nuevo-Tramite

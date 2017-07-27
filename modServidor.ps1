@@ -23,8 +23,40 @@ $Tareas = $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("Tareas",$null, $n
 $Tareas.Submenus.Add("Mantenimiento Tareas",$null, $null)
 $Tareas.Submenus.Add("Imprimir tarea", $null, $null)
 $deOI = $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("deOI", $null, $null)
+$deOI.Submenus.Add("Backup deOI", {Backup-deOI}, $null)
 $deOI.Submenus.Add("Actualizar leyes", {Actualiza-Leyes}, $null)
 $deOI.Submenus.Add("Importar sanciones", {Importa-Sanciones}, $null)
+$deOI.Submenus.Add("Añadir trámite", {C:\usuarios\42795331\deServidor\NuevoTramite}, $null)
+$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("borrar menú",{$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.clear()},$null)
+
+
+
+
+function backup-deOI {
+ <#
+.SYNOPSIS
+    Descarga los grafos en varios formatos para salvaguardarlos
+.COMMENT
+    hacerlo en modo texto primero y luego con ventana
+    --- bajarse todo el repositorio ---
+    GET /rdf4j-server/repositories/mem-rdf/statements HTTP/1.1
+    
+    Accept: application/rdf+xml
+    ---- bajarse un contexto ----
+    GET /rdf4j-server/repositories/mem-rdf/statements?context=_:n1234x5678 HTTP/1.1
+    
+    Accept: application/rdf+xml
+    --- obtener el numero de triples ---
+    GET /rdf4j-server/repositories/mem-rdf/size HTTP/1.1
+
+    get tamaño contexto
+    
+    
+#>   
+
+}
+
+
 
 
 
@@ -114,7 +146,7 @@ function Get-RdfRepositorios {
 Obtiene los metadatos en xml de leyes desde el BOE y los pasa como objetos PW
 .DESCRIPTION
 para cada ley con id del boe construye la url xml , obtiene los metadatos y el analisis y actualiza la base de datos rdf
-.PARAMETRO $LeyBoe
+.PARAMETRO                                                                                                                                                                                                               $LeyBoe
 #>
 
     $webClient = New-Object System.Net.WebClient
