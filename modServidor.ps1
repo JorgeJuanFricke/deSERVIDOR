@@ -1,4 +1,4 @@
-﻿<# MODULO SERVIDOR deJEFA #>
+<# MODULO SERVIDOR deJEFA #>
 
 
 
@@ -32,29 +32,6 @@ $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("borrar menú",{$psISE.Curre
 
 
 
-function backup-deOI {
- <#
-.SYNOPSIS
-    Descarga los grafos en varios formatos para salvaguardarlos
-.COMMENT
-    hacerlo en modo texto primero y luego con ventana
-    --- bajarse todo el repositorio ---
-    GET /rdf4j-server/repositories/mem-rdf/statements HTTP/1.1
-    
-    Accept: application/rdf+xml
-    ---- bajarse un contexto ----
-    GET /rdf4j-server/repositories/mem-rdf/statements?context=_:n1234x5678 HTTP/1.1
-    
-    Accept: application/rdf+xml
-    --- obtener el numero de triples ---
-    GET /rdf4j-server/repositories/mem-rdf/size HTTP/1.1
-
-    get tamaño contexto
-    
-    
-#>   
-
-}
 
 
 
