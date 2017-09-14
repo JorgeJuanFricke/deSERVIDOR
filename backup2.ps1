@@ -1,6 +1,13 @@
-#function backup-Repo {
-    Set-PSDebug -step
- <#
+
+Add-Type -AssemblyName System.Windows.Forms
+$urlRepos = "http://10.50.208.48:8080/rdf4j-server/repositories"
+
+
+
+function fbackup-Repo {
+    #Set-PSDebug  
+
+<#
 .SYNOPSIS
     Descarga los grafos en varios formatos para salvaguardarlos
 .COMMENT
@@ -26,9 +33,8 @@
     GET /rdf4j-server/repositories/mem-rdf/contexts HTTP/1.1
 #>   
 
-Add-Type -AssemblyName System.Windows.Forms
-    $urlRepos = "http://10.50.208.48:8080/rdf4j-server/repositories"
-
+    
+# FORM ----------------------------------------------------------
 
     $backupRDF = New-Object system.Windows.Forms.Form
     $backupRDF.Text = "Copia respaldo datos deJefa"
@@ -37,28 +43,27 @@ Add-Type -AssemblyName System.Windows.Forms
     $backupRDF.Height = 456
 
     $backupRDF.Add_Load({
-    #add here code triggered by the event
+        #add here code triggered by the event
+    })
 
 
-    # REPOSITORIOS
-    $cbRepo.Items.Add("deOI")
-    $cbRepo.Items.add("deOAT")
-    $cbRepo.Selectedindex(0)
+
+
+# COMBO REPOSITORIOS
+
     
-    # contextos
-
-    $urlContextos = $urlRepos+"/$Repo"+"/contexts"
-    $urlContextos
-    $Contextos = Invoke-RestMethod  $urlContextos  -headers @{'Accept'='application/sparql-results+xml, */*;q=0.5'}
-    $Contextos
     
-    foreach ($Contexto in $Contextos) {
-        $cbContexto.Items.Add($Contexto)
-    } 
+# COMBO FORMATOS
 
-    # Ficheros
+$cbFormato = New-Object system.windows.Forms.ComboBox
+$cbFormato.Width = 150
+$cbFormato.Height = 20
 
-    # formatos
+$cbFormato.location = new-object system.drawing.point(38,252)
+$cbFormato.Font = "Microsoft Sans Serif,10"
+$backupRDF.controls.Add($cbFormato)
+
+
     $cbFormato.items.add("TriG")
     $cbFormato.items.add("BinaryRDF")
     $cbFormato.items.add("TriX")
@@ -68,11 +73,28 @@ Add-Type -AssemblyName System.Windows.Forms
     $cbFormato.items.add("RDF/XML")
     $cbFormato.items.add("RDF/JSON")
     $cbFormato.items.add("Turtle")
+    $cbFormato.selectedindex = 4    
     
-})
+    $cbFormato.Add_SelectedValueChanged({
+        #Construir URL 
+    })
 
 
-#label
+# COMBO CONTEXTOS
+
+    $cbContexto = New-Object system.windows.Forms.ComboBox
+    $cbContexto.Text = "cbContexto"
+    $cbContexto.Width = 293
+    $cbContexto.Height = 20
+    $cbContexto.location = new-object system.drawing.point(36,108)
+    $cbContexto.Font = "Microsoft Sans Serif,10"
+    $backupRDF.controls.Add($cbContexto)
+    $cbContexto.Add_SelectedValueChanged({
+        #add here code triggered by the event
+    })
+
+# ETIQUETAS
+
 
 $label4 = New-Object system.windows.Forms.Label
 $label4.Text = "Repositorio:"
@@ -124,63 +146,25 @@ $backupRDF.controls.Add($label21)
 
 
 
-# combos
 
-$cbRepo = New-Object system.windows.Forms.ComboBox
-$cbRepo.Text = "deOI"
-$cbRepo.Width = 294
-$cbRepo.Height = 20
-$cbRepo.Add_SelectedValueChanged({
-      $Repo = $cbRepo.SelectedItems.ToString()
-
-})
-$cbRepo.Add_ParentChanged({
-#add here code triggered by the event
-})
-$cbRepo.location = new-object system.drawing.point(35,48)
-$cbRepo.Font = "Microsoft Sans Serif,10"
-$backupRDF.controls.Add($cbRepo)
-
-$cbContexto = New-Object system.windows.Forms.ComboBox
-$cbContexto.Text = "cbContexto"
-$cbContexto.Width = 293
-$cbContexto.Height = 20
-$cbContexto.Add_SelectedValueChanged({
-#add here code triggered by the event
-})
-$cbContexto.location = new-object system.drawing.point(36,108)
-$cbContexto.Font = "Microsoft Sans Serif,10"
-$backupRDF.controls.Add($cbContexto)
-
-$cbFichero = New-Object system.windows.Forms.ComboBox
-$cbFichero.Text = "cbFichero"
+$cbFichero = New-Object system.windows.Forms.Texbox
+$cbFichero.Text = "tbFichero"
 $cbFichero.Width = 300
 $cbFichero.Height = 20
-$cbFichero.Add_SelectedValueChanged({
-#add here code triggered by the event
-})
 $cbFichero.location = new-object system.drawing.point(36,176)
 $cbFichero.Font = "Microsoft Sans Serif,10"
 $backupRDF.controls.Add($cbFichero)
 
 
 
-$cbFormato = New-Object system.windows.Forms.ComboBox
-$cbFormato.Text = "Formato"
-$cbFormato.Width = 150
-$cbFormato.Height = 20
-$cbFormato.Add_SelectedValueChanged({
-#add here code triggered by the event
-})
-$cbFormato.location = new-object system.drawing.point(38,252)
-$cbFormato.Font = "Microsoft Sans Serif,10"
-$backupRDF.controls.Add($cbFormato)
 
 
 
 
 
-#botones
+
+
+# BOTONES -----------------------------------------------------------
 
 $bRestauraContexto = New-Object system.windows.Forms.Button
 $bRestauraContexto.Text = "Restaurar contexto"
@@ -261,4 +245,30 @@ $backupRDF.Dispose()
 
 }
 
-backup-Repo
+
+
+
+
+
+fbackup-Repo
+
+# EVENTOS COMBOS ----------------------------------------------------
+
+
+
+
+
+function Get-contextos() {
+    parameters $Repo
+ $Repo = 
+      
+    # contextos
+
+    $urlContextos = $urlRepos+"/$Repo"+"/contexts"
+    $urlContextos
+    $Contextos = Invoke-RestMethod  $urlContextos  -headers @{'Accept'='application/sparql-results+xml, */*;q=0.5'}
+    $Contextos
+    foreach ($Contexto in $Contextos) {
+        $cbContexto.Items.Add($Contexto)
+    } 
+}
