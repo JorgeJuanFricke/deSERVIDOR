@@ -1,20 +1,47 @@
 
-$urlRepos = "http://10.50.208.48:8080/rdf4j-server/repositories"
+$Servidor = "http://10.50.208.48:8080/rdf4j-server/repositories"
 
 
 
                                                                                                                                                                                                                                                                                                                                                     
-function Backup_deOI {
-    # pedir solo directorio para copia en turtle por contextos (default)
-    # crear subdirectorio deOI+FECHA
-    # obtener y mostrar todos los contextos a grabar
-    # mostrar la fecha de la última copia
-    # pedir confirmar copia (mediante avanzado)
-    # hacer la copia, en formato contexto+fecha.ttl
-    parameter()
+function Backup {
+<#
+.SYNOPSIS
+Hace la copia de seguridad del repositorio rdf4j
+.DESCRIPTION
+Hace la copia de seguridad del repositorio rdf4j
+.PARAMETER Repositorio
+Repositorio a copiar
+.PARAMETER Carpeta
+Carpeta para la copia
+.EXAMPLE
+.EXAMPLE
+#>
+[CmdLetBinding()]
 
+    param (
+    [string]$Repositorio= "deOI",        
+    
+    [string]$Carpeta="C:/DEOI")
+
+    <# pedir repositorio
+    $Repo = Read-Host "Introduzca nombre del repositorio (enter=default)"
+    # pedir solo directorio para copia en turtle por contextos (default)
+    $carpeta = Read-Host "Introduzca nombre directorio a efectuar la copia (enter=default)"
+    #>
+
+    # obtener fecha actual
+    $hoy = get-date -format d-M-yyyy
+    write-verbose "Realizando copia repositorio $Repositorio en $Carpeta"
+    # salva repositorio completo
+    "$Servidor/$Repositorio/statements", $Carpeta | salva-RDF     
+
+    # salva repositorio por contextos
+    get-rdfContextos($Repositorio,$Carpeta) | Salva-rdf
 
 }
+
+
 
 
 function Restaura_deOI {
@@ -25,7 +52,179 @@ function Restaura_deOI {
 
 
 
+
+
+
+
+# GET-Repos ---------------------------------------------------------
+
+
+function Get-Repos() {
+
+<#
+.SYNOPSIS
+Obtiene la lista de repositorios del servidor
+.DESCRIPTION
+No demasiado Ãºtil pues solo existe dos repositorios: deOI, deOAT
+.PARAMETER urlServidor
+
+.EXAMPLE
+.EXAMPLE
+#>
+[CmdLetBinding()]
+
+    param (
+    [Parameter(Mandatory=$True)]
+    [string]$urlServidor        
+    )
+        
+    
+    
+     try {
+         $Repos = Invoke-RestMethod "$urlServidor/repositories" 
+     }
+
+     catch {
+        $MensajeError = $_.Exception.message
+        write-host "ERROR Obteniendo lista de repositorios del servidor $Repo [$MensajeError]"
+        return
+     }
+
+    if ($Repos) {
+        write-out $Repos
+       
+    }
+    else {
+        write-host "No existen repositorios para el servidor $urlServidor"
+    }
+} 
+ 
+
+
+
+
+
+# GET-CONTEXTOS -------------------------------------------------------------------------------
+
+function Get-contextos() {
+<#
+.SYNOPSIS
+Obtiene la lista de contextos del repositorio.
+.DESCRIPTION
+.PARAMETER repo
+repositorio donde buscar los contextos/grafos
+.EXAMPLE
+.EXAMPLE
+#>
+
+[CmdLetBinding()]
+
+    param (
+    [Parameter(Mandatory=$True)]
+    [string]$Repo)
+
+    try {
+         $grafos = Invoke-RestMethod  $url  -headers @{'Accept'='application/sparql-results+xml, */*;q=0.5'}
+        }
+    
+    catch {
+        $MensajeError = $_.Exception.message
+        write-host "ERROR Obteniendo contextos [$MensajeError]"
+        return
+         }
+
+    finally {
+        if (-NOT $($grafos.sparql.results)) { 
+            write-host "No existen contextos para el repositorio $Repo" 
+            
+        }
+
+        foreach ($grafo in $grafos) {
+            $url = "$urlServidor/$Repo/contexts?context=$($grafo.sparql.results.result.binding.uri)"
+            WRITE-OUT $url
+        }
+    }
+        
+}
+
+
+
+
+
+
+# SALVA TRIPLES ------------------------------------------------------------
+
+
+function Salva-rdf() {
+<#
+.SYNOPSIS
+Realiza la copia de seguridad de la base de datos RDF. 
+.DESCRIPTION
+Realiza la copia de seguridad de la base de datos RDF. Mediante REST API RDF4J Obtiene la salida RDF y la graba en un fichero 
+Envia request url mediante rest api rdf4j. Control de errores mediante Try/catch. 
+.PARAMETER url
+url rest API para enviar al servidor RDF4J
+.PARAMETER path
+path en donde guardar el fichero
+.EXAMPLE
+.EXAMPLE
+#>
+[CmdLetBinding()]
+
+    param (
+    [Parameter(Mandatory=$True, ValuefromPipeline=$True)]
+    [string]$url,
+
+    [Parameter(Mandatory=$True, ValuefromPipeline=$True)]
+    [string]$path        
+    )
+        
+    begin {}
+    process {
+
+         try {
+            $triples = Invoke-RestMethod $url -headers @{'Accept'='application/rdf+xml'}
+         }
+
+         catch {
+           $MensajeError = $_.Exception.message
+            write-host "ERROR obteniendo triples del repositorio/contexto $url [$MensajeError]"
+            return
+        }
+
+        if ($triples) {
+            if ($path.indexof("?context=") -ge 0) {
+                $NombreFichero = $path.substring($path.indexof("?context="))
+                write-verbose "grabando contexto $NombreFichero en $path"
+            } 
+
+            else {
+                $path = $path.trimend("/statements")
+                $Nombrefichero = $path.substring($path.indexof("repositories/")) 
+                write-verbose "grabando repositorio $NombreFichero en $path"
+            }
+            try {
+                $triples | out-file -filepath $Nombrefichero }
+            catch {
+                $MensajeError = $_.Exception.message
+                write-host "ERROR grabando triples de $url en $Nombrefichero [$MensajeError]"
+            }
+         # grabar triples
+      }
+         else {
+            write-host "No existen triples para el repositorio/contexto $url "
+     }
+}
+}
+
+
+
+
+
+
+<#
 function Backup-GUI {
+
 Add-Type -AssemblyName System.Windows.Forms
 $backupRDF = New-Object system.Windows.Forms.Form
 $backupRDF.Text = "Copia respaldo datos deJefa"
@@ -193,47 +392,10 @@ $label21.Font = "Microsoft Sans Serif,10"
 $backupRDF.controls.Add($label21)
 
 
-
-
-
-
-
-
-
 [void]$backupRDF.ShowDialog()
 $backupRDF.Dispose()
 }
 
-
-function Get-contextos() {
-
-
-[CmdLetBinding()]
-
-    param (
-    [Parameter(Mandatory=$True)]
-    [string]$Repo        
-    )
-        
-    $urlContextos = $urlRepos+"/$Repo"+"/contexts"
-    
-     try {
-         $grafos = Invoke-RestMethod  $urlContextos  -headers @{'Accept'='application/sparql-results+xml, */*;q=0.5'}
-     }
-
-     catch {
-        $MensajeError = $_.Exception.message
-
-       write-host "ERROR Obteniendo contextos [$MensajeError]"
-       return
-     }
-
-    if ($grafos.sparql.results) {
-        return $grafos.sparql.results.result.binding.uri
-    }
-    else {
-        write-host "No existen contextos para el repositorio $Repo"
-    }
-}
+#>
 
 backup

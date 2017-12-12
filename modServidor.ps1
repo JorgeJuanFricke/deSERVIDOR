@@ -33,7 +33,18 @@ $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add("borrar menú",{$psISE.Curre
 
 
 
+function Importar-Inventario {
+## INVENTARIO.TTL
+## GRABAR desde LIBREOFFICE y marcar editar configuración, luego seleccionar unicode"
 
+$csv = Read-Host -Prompt 'Introduzca fichero de inventario (csv encoding unicode)'
+$INV = Import-Csv $csv
+$inv | forEach-object {
+    $sujeto = $inv."Código equipo"
+    $predicado = $inv.
+    $obhjeto
+    
+}
 
 
 

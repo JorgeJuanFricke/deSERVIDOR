@@ -77,13 +77,13 @@ param (
 
 BEGIN {
   
-  Write-Verbose "Error log será "c:\PWLOGS\logsLEYbOE"
+  Write-Verbose "Error log será c:\PWLOGS\logsLEYbOE"
   
 }
 
 PROCESS {
     Write-verbose "entrando en process con $leyBoe"
-    foreach ($Ley in $LeyBoe)
+    foreach ($Ley in $LeyBoe) {
     $urlXmlBOE = $urlBoe + $leyBoe
     $xmlLey = [XML] (Invoke-WebRequest $urlXmlBOE)
     $objLey = @{}
@@ -106,6 +106,7 @@ PROCESS {
 
     
     write-Output $objLey
+}
 
 END {}
     
